@@ -1,14 +1,17 @@
+SUM_TO = 2020
+
+
 # d1p1
 # finds two values that sum to 2020, and print their product
-def two_sum(data):
+def two_sum(data, other=0):
     left = 0
     right = len(data) - 1
 
     while left < right:
-        tot = data[left] + data[right]
-        if tot == 2020:
-            return data[left] * data[right]
-        elif tot < 2020:
+        tot = other + data[left] + data[right]
+        if tot == SUM_TO:
+            return data[left] * data[right] * (other if other != 0 else 1)
+        elif tot < SUM_TO:
             left += 1
         else:
             right -= 1
@@ -20,17 +23,11 @@ def two_sum(data):
 # finds three values that sum to 2020, and print their product
 def three_sum(data):
     for i in range(len(data)):
-        left = i + 1
-        right = len(data) - 1
-
-        while left < right:
-            tot = data[i] + data[left] + data[right]
-            if tot == 2020:
-                return data[i] * data[left] * data[right]
-            elif tot < 2020:
-                left += 1
-            else:
-                right -= 1
+        t_sum = two_sum(data[i+1:], data[i])
+        if t_sum is None:
+            continue
+        else:
+            return t_sum
 
     return None
 
