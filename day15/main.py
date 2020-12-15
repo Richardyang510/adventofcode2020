@@ -2,7 +2,7 @@
 GO_TO = 30000000  # part 2
 INPUT = '0,13,1,16,6,17'
 
-input_nums = list(map(int, '0,13,1,16,6,17'.split(',')))
+input_nums = list(map(int, INPUT.split(',')))
 last_seen = {}
 
 first_ignore = len(input_nums)
