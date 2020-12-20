@@ -1,3 +1,6 @@
+import copy
+
+
 def get_edge(tile, e):
     if e == 'u':
         return tile[0]
@@ -16,7 +19,7 @@ def get_edge(tile, e):
     return ""
 
 
-SQUARE_SIZE = 3
+SQUARE_SIZE = 12
 TILE_SIZE = 10
 
 input_file = open("input.txt", "r")
@@ -69,8 +72,8 @@ for t_id in tile_relations:
 print(prod)
 
 # p2
-for key in tile_relations:
-    print(key, tile_relations[key])
+# for key in tile_relations:
+#     print(key, tile_relations[key])
 
 flip = {'r': 'l', 'l': 'r', 'u': 'd', 'd': 'u'}
 flip_v = {'r': 'r', 'l': 'l', 'u': 'd', 'd': 'u'}
@@ -108,39 +111,24 @@ def traverse(start, d, nodes_only=False):
     return visited
 
 
-def rot(t, rels, times=1):
+def rot(t, times=1):
     for _ in range(times):
         new_t = []
         for r in list(zip(*t[::-1])):
             new_t.append(''.join(list(r)))
         t = new_t
 
-    for _ in range(times):
-        new_rels = {}
-        for rell in rels:
-            old_dir = rell[0]
-            new_dir = rott[old_dir]
-            new_key = new_dir + rell[1:]
-            new_rels[new_key] = rels[rell]
-        rels = new_rels
-
-    return t, rels
+    return t
 
 
-def mir(t, rels, h=False):
+def mir(t, h=False):
     new_t = []
     if h:
+        new_t = list(reversed(t))
+    else:
         for r in t:
             new_t.append(r[::-1])
-    else:
-        new_t = reversed(t)
 
-    new_rels = {}
-    for rell in rels:
-        old_or = rell[2]
-        new_dir = '1' if old_or == '0' else '0'
-        new_key = rell[:2] + new_dir
-        new_rels[new_key] = rels[rell]
     return new_t
 
 
@@ -149,7 +137,15 @@ def print_t(t):
         print(r)
 
 
-v = traverse(first, 'l')
+def trim_tile(t):
+    new_t = []
+    for idx in range(TILE_SIZE):
+        if 1 <= idx < TILE_SIZE - 1:
+            new_t.append(t[idx][1:-1])
+    return new_t
+
+
+v = traverse(first, 'd')
 
 img_arr = []
 for k in v:
@@ -164,15 +160,108 @@ for k in v:
 for row in img_arr:
     print(row)
 
-tiles[first], tile_relations[first] = rot(tiles[first], tile_relations[first], 3)
-
-for key in tile_relations:
-    print(key, tile_relations[key])
+# print(tile_relations[first])
+# tiles[first] = rot(tiles[first], 3)
 
 for i in range(SQUARE_SIZE):
-    for j in range(TILE_SIZE):
+    for j in range(SQUARE_SIZE):
+        if i == j == 0:
+            continue
+        # brute force all 8 orientations
+        ors = [tiles[img_arr[i][j]]]
+        ors.append(rot(ors[0]))
+        ors.append(rot(ors[1]))
+        ors.append(rot(ors[2]))
+        ors.append(mir(ors[0]))
+        ors.append(rot(ors[4]))
+        ors.append(rot(ors[5]))
+        ors.append(rot(ors[6]))
+
+        found = False
+
+        for or_tile in ors:
+            # check prev neighbors (first left, then up)
+
+            if 0 <= j - 1 < SQUARE_SIZE:
+                neighbor_tile = tiles[img_arr[i][j - 1]]
+
+                e1 = get_edge(or_tile, 'l')
+                e2 = get_edge(neighbor_tile, 'r')
+
+                if e1 == e2:
+                    if i == 0:
+                        tiles[img_arr[i][j]] = or_tile
+                        found = True
+                        break
+
+            if 0 <= i - 1 < SQUARE_SIZE:
+                neighbor_tile = tiles[img_arr[i - 1][j]]
+
+                e1 = get_edge(or_tile, 'u')
+                e2 = get_edge(neighbor_tile, 'd')
+
+                if e1 == e2:
+                    tiles[img_arr[i][j]] = or_tile
+                    found = True
+                    break
+
+        if not found:
+            print("NOT FOUND", img_arr[i][j])
+
+# for i in range(SQUARE_SIZE):
+#     for j in range(TILE_SIZE):
+#         line = ''
+#         for k in range(SQUARE_SIZE):
+#             line += str(tiles[img_arr[i][k]][j]) + ' '
+#         print(line)
+#     print()
+
+for t in tiles:
+    tiles[t] = trim_tile(tiles[t])
+
+img = []
+for i in range(SQUARE_SIZE):
+    for j in range(TILE_SIZE - 2):
         line = ''
         for k in range(SQUARE_SIZE):
-            line += str(tiles[img_arr[i][k]][j]) + ' '
-        print(line)
-    print()
+            line += str(tiles[img_arr[i][k]][j])
+        img.append(line)
+
+num_hash = 0
+for row in img:
+    num_hash += row.count("#")
+
+sea_monster = ["..................#.",
+               "#....##....##....###",
+               ".#..#..#..#..#..#..."]
+
+mons_ors = [sea_monster]
+mons_ors.append(rot(mons_ors[0]))
+mons_ors.append(rot(mons_ors[1]))
+mons_ors.append(rot(mons_ors[2]))
+mons_ors.append(mir(mons_ors[0]))
+mons_ors.append(rot(mons_ors[4]))
+mons_ors.append(rot(mons_ors[5]))
+mons_ors.append(rot(mons_ors[6]))
+
+for mons_or in mons_ors:
+    img_c = copy.deepcopy(img)
+    num_found = 0
+    mons_h = len(mons_or)
+    mons_w = len(mons_or[0])
+    # top left of mons
+    for i in range(len(img_c) - mons_h):
+        for j in range(len(img_c) - mons_w):
+            # iterate over monster
+            match = True
+            for k in range(mons_h):
+                for l in range(mons_w):
+                    if mons_or[k][l] == "#" and img_c[i + k][j + l] != '#':
+                        match = False
+                        break
+                if not match:
+                    break
+            if match:
+                num_found += 1
+    if num_found != 0:
+        print(num_found, num_hash - 15 * num_found)
